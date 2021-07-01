@@ -20,7 +20,7 @@ class virtual_memory:
 
     def find_area(self,addr):
         for area in self.table:
-            if area.start < addr:
+            if area.start <= addr:
                 if area.end >= addr:
                     return area
         return None
@@ -53,7 +53,7 @@ class virtual_memory:
     def __repr__(self):
         out = 'virtual memory:\n'
         for area in self.table:
-            out += str(area)
+            out += '\t'+str(area)+'\n'
         return out
 
 if __name__ == '__main__':

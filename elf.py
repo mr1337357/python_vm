@@ -15,10 +15,11 @@ class elf_file():
 
         def __repr__(self):
             ret = ''
-            ret += '\tsh_name: {}\n'.format(self.sh_name)
+            ret += '\tsh_name: {}\n'.format(self.name)
             ret += '\tsh_type: {}\n'.format(hex(self.sh_type))
             ret += '\tsh_flags: {}\n'.format(hex(self.sh_flags))
             ret += '\tsh_addr: {}\n'.format((hex(self.sh_addr)))
+            ret += '\tsh_size: {}\n'.format((hex(self.sh_size)))
             return ret
     
     def load_section_table(self):
@@ -38,6 +39,18 @@ class elf_file():
                 sec.sh_addralign = self.read_long(infile)
                 sec.sh_entsize = self.read_long(infile)
                 self.sections.append(sec)
+            self.string_table_index = self.sections[self.e_shstrndx].sh_offset
+            for sec in self.sections:
+
+                infile.seek(self.string_table_index+sec.sh_name)
+                sec.name = ''
+                inb = infile.read(1)[0]
+                while inb != 0:
+                    if inb == 0:
+                        break
+                    sec.name += chr(inb)
+                    inb = infile.read(1)[0]
+
     def load(self):
         with open(self.filename,'rb') as infile:
             self.ident = {}
@@ -68,6 +81,11 @@ class elf_file():
             self.e_shnum = self.read_short(infile)
             self.e_shstrndx = self.read_short(infile)
         self.load_section_table()
+        
+    def read_section(self,section):
+        with open(self.filename,'rb') as infile:
+            infile.seek(section.sh_offset)
+            return infile.read(section.sh_size)
             
     def dump(self):
         print('ident: ' + dump_bytes(self.ident['byte']))
@@ -83,6 +101,7 @@ class elf_file():
         print('e_ehsize: {}'.format(hex(self.e_ehsize)))
         print('e_shentsize: {}'.format(self.e_shentsize))
         print('e_shnum: {}'.format(self.e_shnum))
+        print('e_shstrndx: {}'.format(self.e_shstrndx))
         for i in range(self.e_shnum):
             print(self.sections[i])
             
