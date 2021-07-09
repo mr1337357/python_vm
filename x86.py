@@ -68,6 +68,14 @@ class decoder:
         if next_state == 99:
             sys.stderr.write('unknown: {}\n'.format(hexcode(byte)))
         self.state = next_state
+        
+    def __str__(self):
+        ret = ''
+        if self.prefix:
+            ret+= '[{}] '.format(hexcode(self.prefix))
+        ret += ''.join([hexcode(b) for b in self.opcode]) + ' '
+        ret += ''.join([hexcode(b) for b in self.op1]) + ' '
+        return ret
 
 
 class x86:
@@ -76,21 +84,14 @@ class x86:
         self.mem = mem
 
     def step(self):
+        loc = self.registers['eip']
         dec = decoder()
         
         while dec.hungry():
             byte = self.mem[self.registers['eip']]
             self.registers['eip'] += 1
-            #sys.stderr.write('byte: {}\n'.format(hexcode(byte)))
             dec.eat(byte)
-        if dec.prefix:
-            sys.stderr.write('[{}] '.format(hexcode(dec.prefix)))
-        for byte in dec.opcode:
-            sys.stderr.write(hexcode(byte))
-        sys.stderr.write(' ')
-        for byte in dec.op1:
-            sys.stderr.write(hexcode(byte))
-        sys.stderr.write(' ')
-        for byte in dec.op2:
-            sys.stderr.write(hexcode(byte))
+            
+        sys.stderr.write(hex(loc)+': ')
+        sys.stderr.write(str(dec))
         sys.stderr.write('\n')
